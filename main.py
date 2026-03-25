@@ -160,14 +160,21 @@ download_model()
 # -----------------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # change to your frontend URL in production
+    allow_origins=["*"],  # replace with frontend URL in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # -----------------------------
-# AI Recommendation via Qwen
+# Debug endpoint to check environment variable
+# -----------------------------
+@app.get("/env")
+async def check_env():
+    return {"OPENROUTER_API_KEY": os.getenv("OPENROUTER_API_KEY")}
+
+# -----------------------------
+# AI Recommendation via Qwen with full error logging
 # -----------------------------
 def generate_ai_recommendation(nutrition: dict, goal: str, disease: str):
     api_key = os.getenv("OPENROUTER_API_KEY")
@@ -205,8 +212,12 @@ Give response in this format:
         }
     )
 
+    # Debug logs
+    print("Status code:", response.status_code)
+    print("Response body:", response.text)
+
     if response.status_code != 200:
-        raise Exception(f"OpenRouter API error {response.status_code}: {response.text}")
+        raise Exception(f"OpenRouter API failed: {response.status_code} {response.text}")
 
     return response.json()["choices"][0]["message"]["content"]
 
