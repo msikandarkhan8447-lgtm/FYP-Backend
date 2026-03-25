@@ -145,6 +145,9 @@ from download_model import download_model
 import os
 import requests
 
+# -----------------------------
+# Initialize FastAPI
+# -----------------------------
 app = FastAPI()
 
 # -----------------------------
@@ -153,20 +156,24 @@ app = FastAPI()
 download_model()
 
 # -----------------------------
-# Enable CORS for frontend requests
+# Enable CORS
 # -----------------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Change to your frontend URL in production
+    allow_origins=["*"],  # change to your frontend URL in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # -----------------------------
-# 🔥 AI Recommendation (Qwen via OpenRouter API)
+# AI Recommendation via Qwen
 # -----------------------------
 def generate_ai_recommendation(nutrition: dict, goal: str, disease: str):
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    if not api_key:
+        raise Exception("OPENROUTER_API_KEY not set in environment variables!")
+
     prompt = f"""
 You are a professional nutritionist AI.
 User Goal: {goal}
@@ -189,7 +196,7 @@ Give response in this format:
     response = requests.post(
         "https://openrouter.ai/api/v1/chat/completions",
         headers={
-            "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
+            "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         },
         json={
@@ -197,7 +204,10 @@ Give response in this format:
             "messages": [{"role": "user", "content": prompt}]
         }
     )
-    
+
+    if response.status_code != 200:
+        raise Exception(f"OpenRouter API error {response.status_code}: {response.text}")
+
     return response.json()["choices"][0]["message"]["content"]
 
 # -----------------------------
@@ -208,17 +218,17 @@ async def predict(file: UploadFile = File(...), weight: float = Form(...)):
     file_location = f"temp_{file.filename}"
     with open(file_location, "wb") as f:
         f.write(await file.read())
-    
+
     try:
         result = predict_nutrients(file_location, weight)
     finally:
         if os.path.exists(file_location):
             os.remove(file_location)
-    
+
     return result
 
 # -----------------------------
-# 🔥 Recommendation Endpoint
+# Recommendation Endpoint
 # -----------------------------
 @app.post("/recommend")
 async def recommend(
@@ -249,6 +259,7 @@ async def recommend(
             "disease": disease
         }
     except Exception as e:
+        # Full error output for debugging
         return {"error": str(e)}
 
 # -----------------------------
