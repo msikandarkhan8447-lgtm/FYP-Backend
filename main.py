@@ -374,7 +374,7 @@ Fiber: {nutrition['fiber']}
 Sugar: {nutrition['sugars']}
 Sodium: {nutrition['sodium']}
 
-Give 5 line simple human advice.
+Give 5 line simple advice.
 """
 
     headers = {
@@ -382,7 +382,7 @@ Give 5 line simple human advice.
     }
 
     payload = {
-        "model": "deepseek-ai/deepseek-chat",
+        "model": "mistralai/mistral-7b-instruct:free",
         "messages": [
             {"role": "user", "content": prompt}
         ]
@@ -398,10 +398,17 @@ Give 5 line simple human advice.
 
         data = response.json()
 
+        # 🔥 SAFE CHECK (IMPORTANT)
+        if "error" in data:
+            return f"AI ERROR: {data['error']['message']}"
+
+        if "choices" not in data:
+            return f"INVALID RESPONSE: {data}"
+
         return data["choices"][0]["message"]["content"]
 
     except Exception as e:
-        return f"AI Error: {str(e)}"
+        return f"REQUEST FAILED: {str(e)}"
 
     prompt = f"""
 You are a professional nutrition expert.
