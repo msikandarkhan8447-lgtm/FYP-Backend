@@ -358,6 +358,14 @@ def call_model(url, payload, headers):
 
 def generate_ai_recommendation(nutrition, goal, disease, age, gender):
 
+    try:
+        print("DEBUG: AI function hit")
+
+        return "TEST OK - AI FUNCTION WORKING"
+
+    except Exception as e:
+        return f"ERROR: {str(e)}"
+
     prompt = f"""
 You are a professional nutrition expert.
 
