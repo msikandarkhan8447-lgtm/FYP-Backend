@@ -444,7 +444,7 @@ import google.generativeai as genai
 app = FastAPI()
 
 # -------------------------
-# CORS FIX (IMPORTANT)
+# CORS (FIXED)
 # -------------------------
 app.add_middleware(
     CORSMiddleware,
@@ -455,25 +455,33 @@ app.add_middleware(
 )
 
 # -------------------------
-# GEMINI SETUP
+# GEMINI SETUP (SAFE)
 # -------------------------
-genai.configure(api_key="YOUR_GEMINI_API_KEY")  # <-- PUT YOUR KEY HERE
+API_KEY = os.getenv("GEMINI_API_KEY")
+
+if not API_KEY:
+    print("WARNING: GEMINI_API_KEY not set!")
+
+genai.configure(api_key=API_KEY)
+
 model = genai.GenerativeModel("gemini-1.5-flash")
+
 
 # -------------------------
 # HOME
 # -------------------------
 @app.get("/")
 def home():
-    return {"message": "API Running"}
+    return {"message": "Backend Running Successfully"}
+
 
 # -------------------------
-# PREDICT (DUMMY / YOUR MODEL HERE)
+# PREDICT (MOCK OR YOUR MODEL)
 # -------------------------
 @app.post("/predict")
 async def predict(file: UploadFile = File(...), weight: int = Form(...)):
 
-    # NOTE: replace this with your ML model later
+    # You can replace this later with your ML model
     return {
         "label": "SPAGHETTI_CARBONARA",
         "weight": weight,
@@ -485,6 +493,7 @@ async def predict(file: UploadFile = File(...), weight: int = Form(...)):
         "sugars": 4,
         "sodium": 500
     }
+
 
 # -------------------------
 # RECOMMENDATION (FIXED GEMINI)
@@ -506,9 +515,9 @@ async def recommend(
 
     try:
         prompt = f"""
-You are a nutrition AI assistant.
+You are a professional nutrition AI.
 
-User Info:
+User Details:
 Age: {age}
 Gender: {gender}
 Goal: {goal}
@@ -523,24 +532,32 @@ Fiber: {fiber}
 Sugar: {sugars}
 Sodium: {sodium}
 
-Give a short diet recommendation in 4-5 lines.
+Give a short 4-6 line personalized diet recommendation.
+Be practical and simple.
 """
 
         response = model.generate_content(prompt)
 
+        # IMPORTANT: Gemini correct output
+        text = response.text if response else "No response"
+
         return {
-            "recommendations": [response.text]
+            "recommendations": [text]
         }
 
     except Exception as e:
+        print("🔥 GEMINI ERROR:", str(e))
+
         return {
             "error": str(e),
-            "recommendations": ["AI failed, try again."]
+            "recommendations": [
+                "AI temporarily failed. Check API key or try again."
+            ]
         }
 
 
 # -------------------------
-# RUN (LOCAL ONLY)
+# RUN SERVER
 # -------------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
