@@ -10,3 +10,4 @@ python-dotenv
 scikit-learn
 h5py
 gdown
+google-generativeai
