@@ -423,13 +423,15 @@
 
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
+from predict_nutrient import predict_nutrients
+from download_model import download_model
 import os
-
 import google.generativeai as genai
+
 
 app = FastAPI()
 
+download_model()
 # -------------------------
 # CORS (FIXED)
 # -------------------------
