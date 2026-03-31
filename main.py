@@ -367,20 +367,7 @@
 # # -----------------------------
 # # Predict Endpoint
 # # -----------------------------
-# @app.post("/predict")
-# async def predict(file: UploadFile = File(...), weight: float = Form(...)):
 
-#     file_location = f"temp_{file.filename}"
-
-#     with open(file_location, "wb") as f:
-#         f.write(await file.read())
-
-#     result = predict_nutrients(file_location, weight)
-
-#     if os.path.exists(file_location):
-#         os.remove(file_location)
-
-#     return result
 
 
 # # -----------------------------
@@ -475,24 +462,20 @@ def home():
     return {"message": "Backend Running Successfully"}
 
 
-# -------------------------
-# PREDICT (MOCK OR YOUR MODEL)
-# -------------------------
 @app.post("/predict")
-async def predict(file: UploadFile = File(...), weight: int = Form(...)):
+async def predict(file: UploadFile = File(...), weight: float = Form(...)):
 
-    # You can replace this later with your ML model
-    return {
-        "label": "SPAGHETTI_CARBONARA",
-        "weight": weight,
-        "calories": 400,
-        "protein": 15,
-        "carbohydrates": 45,
-        "fats": 18,
-        "fiber": 2,
-        "sugars": 4,
-        "sodium": 500
-    }
+    file_location = f"temp_{file.filename}"
+
+    with open(file_location, "wb") as f:
+        f.write(await file.read())
+
+    result = predict_nutrients(file_location, weight)
+
+    if os.path.exists(file_location):
+        os.remove(file_location)
+
+    return result
 
 
 # -------------------------
