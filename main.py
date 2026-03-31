@@ -426,14 +426,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from predict_nutrient import predict_nutrients
 from download_model import download_model
 import os
+import uvicorn
 import google.generativeai as genai
-
 
 app = FastAPI()
 
-download_model()
 # -------------------------
-# CORS (FIXED)
+# CORS
 # -------------------------
 app.add_middleware(
     CORSMiddleware,
@@ -443,25 +442,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-@app.post("/predict")
-async def predict(file: UploadFile = File(...), weight: float = Form(...)):
-    # Save file temporarily
-    file_location = f"temp_{file.filename}"
-    with open(file_location, "wb") as f:
-        f.write(await file.read())
-
-    # Predict nutrition
-    result = predict_nutrients(file_location, weight)
-
-    # Remove temp file
-    if os.path.exists(file_location):
-        os.remove(file_location)
-
-# # #     # Return nutrition ONLY, frontend will handle user input for recommendation
-    return result
 # -------------------------
-# GEMINI SETUP (SAFE)
+# RUN MODEL ON STARTUP (FIX)
+# -------------------------
+@app.on_event("startup")
+def load_model():
+    print("Downloading/loading model...")
+    download_model()
+    print("Model ready ✔")
+
+# -------------------------
+# GEMINI
 # -------------------------
 API_KEY = os.getenv("GEMINI_API_KEY")
 
@@ -469,18 +460,30 @@ if not API_KEY:
     print("WARNING: GEMINI_API_KEY not set!")
 
 genai.configure(api_key=API_KEY)
-
 model = genai.GenerativeModel("gemini-2.5-flash")
 
 
 # -------------------------
-# HOME
+# PREDICT
 # -------------------------
+@app.post("/predict")
+async def predict(file: UploadFile = File(...), weight: float = Form(...)):
 
+    file_location = f"temp_{file.filename}"
+
+    with open(file_location, "wb") as f:
+        f.write(await file.read())
+
+    result = predict_nutrients(file_location, weight)
+
+    if os.path.exists(file_location):
+        os.remove(file_location)
+
+    return result
 
 
 # -------------------------
-# RECOMMENDATION (FIXED GEMINI)
+# RECOMMEND
 # -------------------------
 @app.post("/recommend")
 async def recommend(
@@ -497,17 +500,14 @@ async def recommend(
     disease: str = Form("")
 ):
 
-    try:
-        prompt = f"""
-You are a professional nutrition AI.
+    prompt = f"""
+You are a nutrition AI.
 
-User Details:
 Age: {age}
 Gender: {gender}
 Goal: {goal}
 Disease: {disease}
 
-Food Nutrition:
 Calories: {calories}
 Protein: {protein}
 Carbs: {carbohydrates}
@@ -516,33 +516,18 @@ Fiber: {fiber}
 Sugar: {sugars}
 Sodium: {sodium}
 
-Give a short 4-6 line personalized diet recommendation.
-Be practical and simple.
+Give 4-6 line advice.
 """
 
-        response = model.generate_content(prompt)
+    response = model.generate_content(prompt)
 
-        # IMPORTANT: Gemini correct output
-        text = response.text if response else "No response"
-
-        return {
-            "recommendations": [text]
-        }
-
-    except Exception as e:
-        print("🔥 GEMINI ERROR:", str(e))
-
-        return {
-            "error": str(e),
-            "recommendations": [
-                "AI temporarily failed. Check API key or try again."
-            ]
-        }
+    return {
+        "recommendations": [response.text]
+    }
 
 
 # -------------------------
-# RUN SERVER
+# RUN
 # -------------------------
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
