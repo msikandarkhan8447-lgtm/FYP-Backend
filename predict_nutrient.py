@@ -33,7 +33,10 @@ def load_model_once():
         if not os.path.exists(MODEL_PATH):
             raise FileNotFoundError(f"Model not found: {MODEL_PATH}")
         print("Loading ML model...")
-        model = tf.keras.models.load_model(MODEL_PATH)
+        model = tf.keras.models.load_model(
+    MODEL_PATH,
+    compile=False
+)
         print("MODEL LOADED")
 
 def load_class_labels_once():
