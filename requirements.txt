@@ -14,6 +14,6 @@ python-dotenv
 scikit-learn
 h5py
 
-gdown
+gdown==5.2.0
 
 google-generativeai
