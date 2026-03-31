@@ -1,12 +1,12 @@
 fastapi
 uvicorn[standard]
 
-tensorflow==2.15.0
+tensorflow
 
-numpy==1.26.4
+numpy
 pandas
 pillow
-opencv-python-headless==4.8.1.78
+opencv-python-headless
 
 python-multipart
 python-dotenv
@@ -14,6 +14,6 @@ python-dotenv
 scikit-learn
 h5py
 
-gdown==5.2.0
+gdown
 
 google-generativeai
