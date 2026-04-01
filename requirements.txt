@@ -1,15 +1,15 @@
-fastapi==0.95.2
-uvicorn==0.22.0
+fastapi
+uvicorn
 
-tensorflow-cpu==2.13.0
-keras==2.13.1
-numpy==1.24.3
-pillow==10.0.1
+tensorflow-cpu
+keras
+numpy
+pillow
 
-pandas==2.1.4
+pandas
 
-python-multipart==0.0.9
+python-multipart
 
-opencv-python-headless==4.8.1.78
+opencv-python-headless
+google-generativeai
 
-gdown==4.7.1
