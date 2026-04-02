@@ -108,8 +108,14 @@ app.add_middleware(
 )
 
 # Gemini setup
-GEMINI_API_KEY = os.getenv("AIzaSyDt4imZ8ZUwszVRLPDAuYNn_IdIuggIQfI")
+# Gemini setup (FIXED)
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+if not GEMINI_API_KEY:
+    raise ValueError("❌ GEMINI_API_KEY not set in environment variables")
+
 genai.configure(api_key=GEMINI_API_KEY)
+
 gemini_model = genai.GenerativeModel("gemini-2.5-flash")
 
 @app.on_event("startup")
@@ -126,7 +132,8 @@ def home():
     return {"message": "Backend running"}
 
 def generate_ai_recommendation(nutrition, goal, disease):
-    prompt = f"""
+    try:
+        prompt = f"""
 You are a professional nutritionist AI.
 
 User Goal: {goal}
@@ -146,8 +153,14 @@ Give response in this exact format:
 2. Reason (2-3 lines)
 3. 4-5 practical suggestions based on goal and disease
 """
-    response = gemini_model.generate_content(prompt)
-    return response.text
+
+        response = gemini_model.generate_content(prompt)
+
+        return response.text if response else "No recommendation generated"
+
+    except Exception as e:
+        print(f"Gemini error: {e}")
+        return "AI recommendation unavailable at the moment"
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...), weight: float = Form(...)):
